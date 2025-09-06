@@ -56,7 +56,7 @@ const LandingPage = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/register">
+              <Link to="/dashboard">
                 <Button size="lg" className="bg-gradient-primary hover:bg-notemon-primary-hover text-white shadow-glow px-8 py-6 text-lg font-semibold">
                   Get Started Free
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -111,7 +111,7 @@ const LandingPage = () => {
             <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
               Join thousands of students who are already learning smarter with NoteMon's AI-powered study tools.
             </p>
-            <Link to="/register">
+            <Link to="/dashboard">
               <Button size="lg" variant="secondary" className="bg-white text-notemon-primary hover:bg-white/90 px-8 py-6 text-lg font-semibold">
                 Start Learning Today
                 <Zap className="ml-2 h-5 w-5" />
@@ -133,9 +133,9 @@ const LandingPage = () => {
           <p className="text-notemon-text-secondary mb-4">
             Your AI-Powered Study Partner
           </p>
-          <Link to="/register">
+          <Link to="/dashboard">
             <Button className="bg-gradient-primary hover:bg-notemon-primary-hover text-white">
-              Join NoteMon
+              Try NoteMon
             </Button>
           </Link>
         </div>

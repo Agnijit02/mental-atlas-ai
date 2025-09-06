@@ -6,9 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { signOut, auth } from '@/lib/firebase';
 import { summarizeText, generateFaqs, generateMindmap, chatWithDocument } from '@/api/notemonApi';
-import { useAuthState } from 'react-firebase-hooks/auth';
 import { 
   Plus, 
   FileText, 
@@ -17,13 +15,12 @@ import {
   List, 
   Send, 
   Loader2, 
-  LogOut,
+  Home,
   BookOpen,
   Sparkles
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const [user, loading] = useAuthState(auth);
   const [documentContent, setDocumentContent] = useState('');
   const [chatMessage, setChatMessage] = useState('');
   const [results, setResults] = useState<any>(null);
@@ -38,24 +35,6 @@ const Dashboard = () => {
     { id: 2, name: 'History_Chapter_5.docx', size: '1.8 MB', uploadDate: '2024-01-14' },
     { id: 3, name: 'Math_Formulas.pdf', size: '890 KB', uploadDate: '2024-01-13' },
   ];
-
-  // Handle sign out
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      navigate('/');
-      toast({
-        title: 'Signed out successfully',
-        description: 'You have been logged out of NoteMon.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Sign out failed',
-        description: 'Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
 
   // Handle API calls
   const handleSummarize = async () => {
@@ -189,19 +168,6 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-notemon-primary" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background text-notemon-text-main">
       {/* Header */}
@@ -218,16 +184,16 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-notemon-text-secondary">
-                Welcome, {user.displayName || user.email}
+                Welcome to your AI Study Partner
               </span>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={handleSignOut}
+                onClick={() => navigate('/')}
                 className="border-notemon-surface text-notemon-text-secondary hover:text-notemon-text-main hover:bg-notemon-surface/20"
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                <Home className="h-4 w-4 mr-2" />
+                Home
               </Button>
             </div>
           </div>
@@ -255,7 +221,7 @@ const Dashboard = () => {
                       <div
                         key={file.id}
                         className="p-3 rounded-lg bg-notemon-background/50 hover:bg-notemon-background/70 cursor-pointer transition-colors"
-                        onClick={() => setDocumentContent(`Sample content for ${file.name}. This is a demonstration of how the document content would appear here.`)}
+                        onClick={() => setDocumentContent(`Sample content for ${file.name}. This is a demonstration of how the document content would appear here. This document contains information about various topics that can be analyzed using AI tools.`)}
                       >
                         <div className="flex items-start space-x-3">
                           <FileText className="h-5 w-5 text-notemon-primary mt-1" />

@@ -19,14 +19,9 @@ const Navbar = () => {
 
           {/* Navigation Links */}
           <div className="flex items-center space-x-4">
-            <Link to="/login">
-              <Button variant="ghost" className="text-notemon-text-secondary hover:text-notemon-text-main hover:bg-notemon-surface/50">
-                Login
-              </Button>
-            </Link>
-            <Link to="/register">
+            <Link to="/dashboard">
               <Button className="bg-gradient-primary hover:bg-notemon-primary-hover text-white shadow-glow">
-                Sign Up
+                Get Started
               </Button>
             </Link>
           </div>
