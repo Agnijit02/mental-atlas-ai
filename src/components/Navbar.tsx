@@ -18,10 +18,13 @@ const Navbar = () => {
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex items-center space-x-4">
-            <Link to="/dashboard">
+         <div className="flex items-center space-x-2">
+            <Link to="/login">
+              <Button variant="ghost" className="hover:bg-notemon-surface/20">Login</Button>
+            </Link>
+            <Link to="/signup">
               <Button className="bg-gradient-primary hover:bg-notemon-primary-hover text-white shadow-glow">
-                Get Started
+                Sign Up
               </Button>
             </Link>
           </div>

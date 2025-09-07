@@ -7,7 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { summarizeText, generateFaqs, generateMindmap, chatWithDocument } from '@/api/notemonApi';
-import { 
+import FileUploadCard from '@/components/FileUploadCard';
+import {
   Plus, 
   FileText, 
   MessageCircle, 
@@ -19,9 +20,11 @@ import {
   BookOpen,
   Sparkles
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 const Dashboard = () => {
   const [documentContent, setDocumentContent] = useState('');
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
   const [results, setResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +32,14 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // --- Handler for successful upload from the new card component ---
+  const handleUploadSuccess = (file: File) => {
+    toast({
+      title: "Upload Successful!",
+      description: `${file.name} has been processed.`, // In a real app, you would refresh your file list here.
+    });
+  };
+  
   // Sample files for demonstration
   const sampleFiles = [
     { id: 1, name: 'Physics_Notes.pdf', size: '2.4 MB', uploadDate: '2024-01-15' },
@@ -205,13 +216,23 @@ const Dashboard = () => {
           {/* Left Column - File List */}
           <div className="col-span-3">
             <Card className="bg-notemon-surface/50 border-notemon-surface h-full">
-              <CardHeader>
+                         <CardHeader>
                 <CardTitle className="text-notemon-text-main flex items-center justify-between">
                   <span>Documents</span>
-                  <Button size="sm" className="bg-gradient-primary hover:bg-notemon-primary-hover text-white">
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Upload
-                  </Button>
+                  <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="icon" className="bg-gradient-primary hover:bg-notemon-primary-hover text-white h-8 w-8">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px] bg-notemon-surface border-notemon-border text-notemon-text-main">
+                      {/* Use the new component here */}
+                      <FileUploadCard
+                        onClose={() => setIsUploadModalOpen(false)}
+                        onUploadSuccess={handleUploadSuccess}
+                      />
+                    </DialogContent>
+                  </Dialog>
                 </CardTitle>
               </CardHeader>
               <CardContent>

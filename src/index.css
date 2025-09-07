@@ -1,63 +1,48 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* NoteMon Design System - Oxford Blue Theme */
-
 @layer base {
   :root {
-    /* NoteMon Color Palette */
-    --notemon-background: 214 100% 14%; /* #001845 Oxford Blue */
-    --notemon-surface: 214 95% 19%; /* #023e7d Yale Blue */
-    --notemon-primary: 209 95% 41%; /* #0466c8 True Blue */
-    --notemon-primary-hover: 209 95% 33%; /* #0353a4 Sapphire */
-    --notemon-text-main: 210 40% 98%; /* #f8fafc */
-    --notemon-text-secondary: 214 16% 71%; /* #cbd5e1 */
-    
-    /* Semantic tokens mapped to NoteMon palette */
-    --background: var(--notemon-background);
-    --foreground: var(--notemon-text-main);
-    
-    --card: var(--notemon-surface);
-    --card-foreground: var(--notemon-text-main);
-    
-    --popover: var(--notemon-surface);
-    --popover-foreground: var(--notemon-text-main);
-    
-    --primary: var(--notemon-primary);
-    --primary-foreground: var(--notemon-text-main);
-    
-    --secondary: var(--notemon-surface);
-    --secondary-foreground: var(--notemon-text-main);
-    
-    --muted: var(--notemon-surface);
-    --muted-foreground: var(--notemon-text-secondary);
-    
-    --accent: var(--notemon-primary);
-    --accent-foreground: var(--notemon-text-main);
-    
-    --destructive: 0 84% 60%;
-    --destructive-foreground: var(--notemon-text-main);
-    
-    --border: var(--notemon-surface);
-    --input: var(--notemon-surface);
-    --ring: var(--notemon-primary);
-    
-    --radius: 0.75rem;
-    
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--notemon-primary)), hsl(var(--notemon-primary-hover)));
-    --gradient-surface: linear-gradient(135deg, hsl(var(--notemon-surface)), hsl(var(--notemon-background)));
-    
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-spring: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    
-    /* Shadows */
-    --shadow-glow: 0 0 30px hsl(var(--notemon-primary) / 0.3);
-    --shadow-card: 0 10px 25px -5px hsl(var(--notemon-background) / 0.5);
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    /* NoteMon Specific Colors */
+    --notemon-primary: 260 80% 60%; /* A vibrant purple */
+    --notemon-primary-rgb: 128, 0, 128; /* Approx RGB for glow */
+    --notemon-primary-hover: 260 70% 50%;
+    --notemon-text-main: 210 40% 98%;
+    --notemon-text-secondary: 215 15% 65%;
+    --notemon-background: 222.2 84% 4.9%;
+    --notemon-surface: 217.2 32.4% 17.5%; /* Darker background for cards/sections */
+    --notemon-border: 217.2 32.4% 37.5%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+   
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+   
+    --primary: 260 80% 60%; /* Using notemon-primary for shadcn primary */
+    --primary-foreground: 210 40% 98%; /* White text on primary */
+   
+    --secondary: 217.2 32.4% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+   
+    --muted: 217.2 32.4% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+   
+    --accent: 217.2 32.4% 17.5%;
+    --accent-foreground: 210 40% 98%;
+   
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+   
+    --border: 217.2 32.4% 17.5%; /* Using notemon-surface for general borders */
+    --input: 217.2 32.4% 17.5%;
+    --ring: 260 80% 60%; /* Using notemon-primary for ring focus */
+ 
+    --radius: 0.5rem;
   }
 }
 
@@ -65,8 +50,175 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Gradients */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--notemon-primary)) 0%, #a064ed 100%);
+}
+
+.hover\:bg-notemon-primary-hover:hover {
+  background-color: hsl(var(--notemon-primary-hover));
+}
+
+.bg-gradient-surface {
+  background: linear-gradient(to bottom, hsl(var(--notemon-background)) 0%, hsl(var(--notemon-surface)) 100%);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 10px rgba(var(--notemon-primary-rgb), 0.5), 0 0 20px rgba(var(--notemon-primary-rgb), 0.3);
+  /* Fallback for non-rgb custom properties, assuming a purple-ish glow */
+  box-shadow: 0 0 10px hsla(var(--notemon-primary), 0.5), 0 0 20px hsla(var(--notemon-primary), 0.3);
+}
+
+/* Text Gradients */
+.bg-gradient-to-r.from-notemon-text-main.via-notemon-primary.to-notemon-text-main {
+  background: linear-gradient(to right, hsl(var(--notemon-text-main)), hsl(var(--notemon-primary)), hsl(var(--notemon-text-main)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+
+/* --- Animations for Landing Page Features --- */
+
+/* This is a new required property for smooth gradient animation */
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Fade In Animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+
+/* --- NEW Chasing Border Card Effect --- */
+.chasing-border-card {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 1rem;
+  background-clip: padding-box;
+}
+
+.chasing-border-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: inherit; 
+  padding: 2px; /* Defines the border thickness */
+  
+  /* The new conic-gradient background that creates the glow */
+  background: conic-gradient(
+    from var(--border-angle),
+    transparent 50%,
+    hsl(var(--notemon-primary) / 0.5),
+    hsl(var(--notemon-primary)),
+    transparent
+  );
+  
+  /* The mask remains the same, revealing only the border */
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  
+  /* Apply the new rotation animation */
+  animation: border-chase 2s linear infinite;
+  z-index: 0;
+}
+
+/* This new keyframe animation rotates the gradient's angle */
+@keyframes border-chase {
+  to {
+    --border-angle: 360deg;
+  }
+}
+
+/* This animation is still used by the animated icon backgrounds */
+@keyframes running-border {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Shine Animation (retained for potential future use) */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shine {
+  animation: shine 1.5s infinite linear;
+  background-size: 200% 100%;
+}
+@keyframes icon-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+.animated-gradient-background {
+  position: relative;
+  overflow: hidden; /* Clips the pseudo-element */
+}
+
+.animated-gradient-background::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--notemon-primary)),
+    #EC4899,
+    #F97316,
+    #EC4899,
+    hsl(var(--notemon-primary))
+  );
+  background-size: 400% 100%;
+  animation: running-border 4s linear infinite;
+  z-index: 1; /* Sits behind the icon */
+}
+
+.animate-icon-pulse {
+  animation: icon-pulse 2.5s infinite ease-in-out;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    /* Firefox */
+    scrollbar-width: none;
+    /* Safari and Chrome */
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 }
