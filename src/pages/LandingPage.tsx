@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import { 
   MessageCircle, 
@@ -14,7 +15,8 @@ import {
   HelpCircle,
   UploadCloud,
   Wand2,
-  AudioLines
+  AudioLines,
+  Loader2
 } from 'lucide-react';
 
 declare global {
@@ -26,6 +28,24 @@ declare global {
 
 
 const LandingPage = () => {
+  const { user, loading } = useAuth();
+
+  // Redirect authenticated users to dashboard
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-notemon-primary mx-auto mb-4" />
+          <p className="text-notemon-text-secondary">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const features = [
     {
       icon: MessageCircle,

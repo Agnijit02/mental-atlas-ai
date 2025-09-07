@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { summarizeText, generateFaqs, generateMindmap, chatWithDocument } from '@/api/notemonApi';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDocuments } from '@/hooks/useDocuments';
 import FileUploadCard from '@/components/FileUploadCard';
 import {
   Plus, 
@@ -18,12 +19,13 @@ import {
   Loader2, 
   Home,
   BookOpen,
-  Sparkles
+  Sparkles,
+  LogOut
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 const Dashboard = () => {
-  const [documentContent, setDocumentContent] = useState('');
+  const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
   const [results, setResults] = useState<any>(null);
@@ -31,13 +33,15 @@ const Dashboard = () => {
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
+  const { documents, loading: documentsLoading, processDocument } = useDocuments();
 
-  // --- Handler for successful upload from the new card component ---
-  const handleUploadSuccess = (file: File) => {
+  const handleUploadSuccess = (file: { name: string; id: string }) => {
     toast({
       title: "Upload Successful!",
-      description: `${file.name} has been processed.`, // In a real app, you would refresh your file list here.
+      description: `${file.name} has been processed.`,
     });
+    setIsUploadModalOpen(false);
   };
   
   // Sample files for demonstration
