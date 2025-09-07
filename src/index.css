@@ -222,3 +222,115 @@
     }
   }
 }
+
+/* Chat Bubble Styling */
+.chat-bubble-user {
+  background: linear-gradient(135deg, hsl(var(--notemon-primary)) 0%, #a064ed 100%);
+  color: white;
+  border-radius: 1rem 1rem 0.25rem 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.chat-bubble-ai {
+  background: hsl(var(--notemon-surface));
+  color: hsl(var(--notemon-text-main));
+  border: 1px solid hsl(var(--notemon-border));
+  border-radius: 1rem 1rem 1rem 0.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Markdown styling within chat bubbles */
+.chat-markdown {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3,
+.chat-markdown h4,
+.chat-markdown h5,
+.chat-markdown h6 {
+  color: inherit;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.chat-markdown h1 { font-size: 1.125rem; }
+.chat-markdown h2 { font-size: 1rem; }
+.chat-markdown h3 { font-size: 0.875rem; }
+
+.chat-markdown p {
+  margin: 0.25rem 0;
+}
+
+.chat-markdown ul,
+.chat-markdown ol {
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+
+.chat-markdown li {
+  margin: 0.125rem 0;
+}
+
+.chat-markdown code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.8em;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.chat-markdown pre {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+}
+
+.chat-markdown pre code {
+  background: none;
+  padding: 0;
+}
+
+.chat-markdown blockquote {
+  border-left: 3px solid hsl(var(--notemon-primary));
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  font-style: italic;
+}
+
+.chat-markdown a {
+  color: hsl(var(--notemon-primary));
+  text-decoration: underline;
+}
+
+.chat-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.chat-markdown th,
+.chat-markdown td {
+  border: 1px solid hsl(var(--notemon-border));
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+}
+
+.chat-markdown th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+/* Dark mode adjustments for chat markdown */
+.dark .chat-markdown code {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .chat-markdown pre {
+  background: rgba(0, 0, 0, 0.2);
+}

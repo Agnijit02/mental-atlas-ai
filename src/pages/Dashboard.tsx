@@ -1,172 +1,194 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocuments } from '@/hooks/useDocuments';
 import FileUploadCard from '@/components/FileUploadCard';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
-  Plus, 
-  FileText, 
-  MessageCircle, 
-  Brain, 
-  List, 
-  Send, 
-  Loader2, 
+  Plus,
+  FileText,
+  MessageCircle,
+  Send,
+  Loader2,
   Home,
   BookOpen,
   Sparkles,
+  Languages,
+  Target,
+  CheckSquare,
+  HelpCircle,
   LogOut
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+
+interface ChatMessage {
+  id: string;
+  message: string;
+  response: string;
+  timestamp: number;
+}
 
 const Dashboard = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
-  const [results, setResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeFeature, setActiveFeature] = useState<string | null>(null);
+  const [documentContent, setDocumentContent] = useState<string>('');
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState<'english' | 'bengali' | 'hindi'>('english');
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, signOut } = useAuth();
-  const { documents, loading: documentsLoading, processDocument } = useDocuments();
+  const { documents, loading: documentsLoading, processDocument, refetch } = useDocuments();
 
-  const handleUploadSuccess = (file: { name: string; id: string }) => {
+  const handleUploadSuccess = async (file: { name: string; id: string }) => {
     toast({
       title: "Upload Successful!",
       description: `${file.name} has been processed.`,
     });
     setIsUploadModalOpen(false);
+
+    // Refresh the documents list to show the new document
+    await refetch();
   };
   
-  // Sample files for demonstration
-  const sampleFiles = [
-    { id: 1, name: 'Physics_Notes.pdf', size: '2.4 MB', uploadDate: '2024-01-15' },
-    { id: 2, name: 'History_Chapter_5.docx', size: '1.8 MB', uploadDate: '2024-01-14' },
-    { id: 3, name: 'Math_Formulas.pdf', size: '890 KB', uploadDate: '2024-01-13' },
-  ];
+  // Format file size for display
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
 
-  // Handle API calls
-  const handleSummarize = async () => {
-    if (!documentContent.trim()) {
-      toast({
-        title: 'No content to summarize',
-        description: 'Please upload a document or enter some text first.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  // Local storage key for chat history
+  const getChatHistoryKey = (documentId: string) => `chat_history_${user?.id}_${documentId}`;
 
-    setIsLoading(true);
-    setActiveFeature('summary');
-    
+  // Load chat history from local storage
+  const loadChatHistory = (documentId: string) => {
     try {
-      const result = await summarizeText(documentContent);
-      setResults(result);
-      toast({
-        title: 'Summary generated!',
-        description: 'Your document summary is ready.',
-      });
+      const key = getChatHistoryKey(documentId);
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsedHistory = JSON.parse(stored);
+        setChatHistory(parsedHistory);
+      } else {
+        setChatHistory([]);
+      }
     } catch (error) {
-      toast({
-        title: 'Summary failed',
-        description: 'Unable to generate summary. Please try again.',
-        variant: 'destructive',
-      });
-      setResults(null);
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading chat history:', error);
+      setChatHistory([]);
     }
   };
 
-  const handleGenerateFAQs = async () => {
-    if (!documentContent.trim()) {
-      toast({
-        title: 'No content for FAQs',
-        description: 'Please upload a document or enter some text first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setActiveFeature('faqs');
-    
+  // Save chat history to local storage
+  const saveChatHistory = (documentId: string, history: ChatMessage[]) => {
     try {
-      const result = await generateFaqs(documentContent);
-      setResults(result);
-      toast({
-        title: 'FAQs generated!',
-        description: 'Your document FAQs are ready.',
-      });
+      const key = getChatHistoryKey(documentId);
+      localStorage.setItem(key, JSON.stringify(history));
     } catch (error) {
-      toast({
-        title: 'FAQ generation failed',
-        description: 'Unable to generate FAQs. Please try again.',
-        variant: 'destructive',
-      });
-      setResults(null);
-    } finally {
-      setIsLoading(false);
+      console.error('Error saving chat history:', error);
     }
   };
 
-  const handleGenerateMindmap = async () => {
-    if (!documentContent.trim()) {
-      toast({
-        title: 'No content for mindmap',
-        description: 'Please upload a document or enter some text first.',
-        variant: 'destructive',
-      });
-      return;
+  // Load chat history when document changes
+  useEffect(() => {
+    if (selectedDocument && user) {
+      loadChatHistory(selectedDocument);
     }
+  }, [selectedDocument, user]);
 
-    setIsLoading(true);
-    setActiveFeature('mindmap');
-    
-    try {
-      const result = await generateMindmap(documentContent);
-      setResults(result);
-      toast({
-        title: 'Mindmap generated!',
-        description: 'Your visual mindmap is ready.',
+  // Auto-scroll to bottom when chat history changes
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest'
       });
-    } catch (error) {
-      toast({
-        title: 'Mindmap generation failed',
-        description: 'Unable to generate mindmap. Please try again.',
-        variant: 'destructive',
-      });
-      setResults(null);
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Small delay to ensure DOM has updated
+    const timeoutId = setTimeout(() => {
+      scrollToBottom();
+    }, 50);
+    return () => clearTimeout(timeoutId);
+  }, [chatHistory]);
+
+  // Also scroll when loading state changes (for new messages)
+  useEffect(() => {
+    if (!isLoading) {
+      const timeoutId = setTimeout(() => {
+        scrollToBottom();
+      }, 150);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isLoading]);
+
+  // Language mapping for prompts
+  const getLanguagePrompt = (language: string) => {
+    switch (language) {
+      case 'bengali':
+        return 'Please respond in Bengali language.';
+      case 'hindi':
+        return 'Please respond in Hindi language.';
+      default:
+        return 'Please respond in English language.';
+    }
+  };
+
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!chatMessage.trim()) return;
-    if (!documentContent.trim()) {
+    if (!selectedDocument) {
       toast({
-        title: 'No document loaded',
-        description: 'Please upload a document to chat about.',
+        title: 'No document selected',
+        description: 'Please select a document first.',
         variant: 'destructive',
       });
       return;
     }
 
     setIsLoading(true);
-    setActiveFeature('chat');
-    
+
     try {
-      const result = await chatWithDocument(chatMessage, documentContent);
-      setResults({ chat: result, message: chatMessage });
+      // Add language instruction to the prompt
+      const languageInstruction = getLanguagePrompt(selectedLanguage);
+      const enhancedPrompt = `${chatMessage}\n\n${languageInstruction}`;
+
+      const result = await processDocument(selectedDocument, 'chat', enhancedPrompt, selectedLanguage);
+
+      // Create new chat message object
+      const newMessage: ChatMessage = {
+        id: Date.now().toString(),
+        message: chatMessage,
+        response: result.chat, // Fix: access the chat property from the response object
+        timestamp: Date.now()
+      };
+
+      // Add to chat history
+      const updatedHistory = [...chatHistory, newMessage];
+      setChatHistory(updatedHistory);
+
+      // Save to local storage
+      if (selectedDocument) {
+        saveChatHistory(selectedDocument, updatedHistory);
+      }
+
       setChatMessage('');
       toast({
         title: 'Response received!',
@@ -189,26 +211,45 @@ const Dashboard = () => {
       <header className="bg-notemon-surface/50 border-b border-notemon-surface backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-gradient-primary rounded-lg shadow-glow">
-                <BookOpen className="h-6 w-6 text-white" />
-              </div>
+            <div className="flex items-center">
               <span className="text-xl font-bold bg-gradient-to-r from-notemon-text-main to-notemon-primary bg-clip-text text-transparent">
                 NoteMon
               </span>
             </div>
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Languages className="h-4 w-4 text-notemon-primary" />
+                <Select value={selectedLanguage} onValueChange={(value: 'english' | 'bengali' | 'hindi') => setSelectedLanguage(value)}>
+                  <SelectTrigger className="w-[120px] bg-notemon-surface/20 border-notemon-surface text-notemon-text-secondary">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-notemon-surface border-notemon-border">
+                    <SelectItem value="english" className="text-notemon-text-main">English</SelectItem>
+                    <SelectItem value="bengali" className="text-notemon-text-main">বাংলা</SelectItem>
+                    <SelectItem value="hindi" className="text-notemon-text-main">हिंदी</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <span className="text-notemon-text-secondary">
                 Welcome to your AI Study Partner
               </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => navigate('/')}
                 className="border-notemon-surface text-notemon-text-secondary hover:text-notemon-text-main hover:bg-notemon-surface/20"
               >
                 <Home className="h-4 w-4 mr-2" />
                 Home
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={signOut}
+                className="border-notemon-surface text-notemon-text-secondary hover:text-notemon-text-main hover:bg-notemon-surface/20"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
               </Button>
             </div>
           </div>
@@ -242,116 +283,147 @@ const Dashboard = () => {
               <CardContent>
                 <ScrollArea className="h-[calc(100%-8rem)]">
                   <div className="space-y-3">
-                    {sampleFiles.map((file) => (
-                      <div
-                        key={file.id}
-                        className="p-3 rounded-lg bg-notemon-background/50 hover:bg-notemon-background/70 cursor-pointer transition-colors"
-                        onClick={() => setDocumentContent(`Sample content for ${file.name}. This is a demonstration of how the document content would appear here. This document contains information about various topics that can be analyzed using AI tools.`)}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <FileText className="h-5 w-5 text-notemon-primary mt-1" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-notemon-text-main truncate">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-notemon-text-secondary">
-                              {file.size} • {file.uploadDate}
-                            </p>
+                    {documentsLoading ? (
+                      <div className="text-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-notemon-primary mx-auto mb-4" />
+                        <p className="text-notemon-text-secondary">Loading documents...</p>
+                      </div>
+                    ) : documents.length === 0 ? (
+                      <div className="text-center py-8">
+                        <FileText className="h-12 w-12 text-notemon-text-secondary mx-auto mb-4" />
+                        <p className="text-notemon-text-secondary mb-2">No documents yet</p>
+                        <p className="text-sm text-notemon-text-secondary">
+                          Upload your first document to get started
+                        </p>
+                      </div>
+                    ) : (
+                      documents.map((document) => (
+                        <div
+                          key={document.id}
+                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                            selectedDocument === document.id
+                              ? 'bg-notemon-primary/20 border border-notemon-primary'
+                              : 'bg-notemon-background/50 hover:bg-notemon-background/70'
+                          }`}
+                          onClick={() => {
+                            setSelectedDocument(document.id);
+                            setDocumentContent(document.content);
+                          }}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <FileText className="h-5 w-5 text-notemon-primary mt-1" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-notemon-text-main truncate">
+                                {document.name}
+                              </p>
+                              <p className="text-xs text-notemon-text-secondary">
+                                {formatFileSize(document.file_size)} • {new Date(document.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
               </CardContent>
             </Card>
           </div>
 
-          {/* Center Column - Chat/Results */}
+          {/* Center Column - Chat */}
           <div className="col-span-6">
             <Card className="bg-notemon-surface/30 border-notemon-surface h-full flex flex-col">
               <CardHeader>
                 <CardTitle className="text-notemon-text-main flex items-center">
                   <MessageCircle className="h-5 w-5 mr-2" />
-                  {activeFeature === 'chat' ? 'Chat Results' : 
-                   activeFeature === 'summary' ? 'Summary' :
-                   activeFeature === 'faqs' ? 'FAQs' :
-                   activeFeature === 'mindmap' ? 'Mindmap' : 'Results'}
+                  AI Chat Assistant
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">
-                <ScrollArea className="flex-1 mb-4">
-                  <div className="min-h-[400px] p-4 bg-notemon-background/30 rounded-lg">
+                <ScrollArea ref={chatScrollRef} className="h-[calc(100vh-300px)] min-h-[400px] max-h-[600px] mb-4 overflow-y-auto">
+                  <div className="p-4 bg-notemon-background/30 rounded-lg">
                     {isLoading ? (
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center">
                           <Loader2 className="h-8 w-8 animate-spin text-notemon-primary mx-auto mb-4" />
                           <p className="text-notemon-text-secondary">
-                            {activeFeature === 'summary' ? 'Generating summary...' :
-                             activeFeature === 'faqs' ? 'Creating FAQs...' :
-                             activeFeature === 'mindmap' ? 'Building mindmap...' :
-                             activeFeature === 'chat' ? 'Processing your question...' : 'Working...'}
+                            Processing your question...
                           </p>
                         </div>
+                        {/* Invisible element to scroll to */}
+                        <div ref={messagesEndRef} />
                       </div>
-                    ) : results ? (
-                      <div className="space-y-4">
-                        {activeFeature === 'summary' && results.summary && (
-                          <div>
-                            <h3 className="font-semibold text-notemon-text-main mb-2">Summary</h3>
-                            <p className="text-notemon-text-secondary leading-relaxed">{results.summary}</p>
-                            {results.keyPoints && (
-                              <div className="mt-4">
-                                <h4 className="font-medium text-notemon-text-main mb-2">Key Points</h4>
-                                <ul className="list-disc list-inside space-y-1 text-notemon-text-secondary">
-                                  {results.keyPoints.map((point: string, index: number) => (
-                                    <li key={index}>{point}</li>
-                                  ))}
-                                </ul>
+                    ) : chatHistory.length > 0 ? (
+                      <div className="space-y-6">
+                        {chatHistory.map((chat, index) => (
+                          <div key={chat.id} className="space-y-4">
+                            {/* User Message Bubble */}
+                            <div className="flex justify-end">
+                              <div className="max-w-[80%] chat-bubble-user p-4">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <div className="w-2 h-2 bg-white/70 rounded-full"></div>
+                                  <span className="text-xs font-medium opacity-80">You</span>
+                                </div>
+                                <div className="chat-markdown">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {chat.message}
+                                  </ReactMarkdown>
+                                </div>
+                                <div className="text-xs opacity-60 mt-2 text-right">
+                                  {new Date(chat.timestamp).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
                               </div>
-                            )}
                           </div>
-                        )}
-                        {activeFeature === 'faqs' && results.faqs && (
-                          <div className="space-y-4">
-                            <h3 className="font-semibold text-notemon-text-main">Frequently Asked Questions</h3>
-                            {results.faqs.map((faq: any, index: number) => (
-                              <div key={index} className="border-l-2 border-notemon-primary pl-4">
-                                <h4 className="font-medium text-notemon-text-main mb-1">{faq.question}</h4>
-                                <p className="text-notemon-text-secondary">{faq.answer}</p>
+
+                            {/* AI Response Bubble */}
+                            <div className="flex justify-start">
+                              <div className="max-w-[80%] chat-bubble-ai p-4">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <div className="w-2 h-2 bg-notemon-primary rounded-full"></div>
+                                  <span className="text-xs font-medium text-notemon-text-main">AI Assistant</span>
                               </div>
-                            ))}
+                                <div className="chat-markdown">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {chat.response}
+                                  </ReactMarkdown>
                           </div>
-                        )}
-                        {activeFeature === 'chat' && results.chat && (
-                          <div className="space-y-4">
-                            <div className="bg-notemon-surface/50 p-3 rounded-lg">
-                              <p className="text-notemon-text-main font-medium">You asked:</p>
-                              <p className="text-notemon-text-secondary">{results.message}</p>
+                                <div className="text-xs text-notemon-text-secondary mt-2">
+                                  {new Date(chat.timestamp).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
                             </div>
-                            <div className="bg-notemon-primary/10 p-3 rounded-lg">
-                              <p className="text-notemon-text-main font-medium">AI Response:</p>
-                              <p className="text-notemon-text-secondary">{results.chat}</p>
                             </div>
                           </div>
-                        )}
-                        {activeFeature === 'mindmap' && (
-                          <div className="text-center">
-                            <Brain className="h-16 w-16 text-notemon-primary mx-auto mb-4" />
-                            <p className="text-notemon-text-secondary">Mindmap visualization would appear here</p>
                           </div>
-                        )}
+                        ))}
+                        {/* Invisible element to scroll to */}
+                        <div ref={messagesEndRef} />
                       </div>
                     ) : (
                       <div className="flex items-center justify-center h-full text-center">
                         <div>
                           <Sparkles className="h-16 w-16 text-notemon-primary mx-auto mb-4" />
-                          <p className="text-notemon-text-secondary">
-                            Select a document and use the AI tools to get started
+                          <p className="text-notemon-text-secondary mb-4">
+                            Select a document and start chatting with AI
                           </p>
+                          <div className="text-sm text-notemon-text-secondary space-y-2">
+                            <p>You can ask for:</p>
+                            <ul className="list-disc list-inside space-y-1">
+                              <li>Summaries of your document</li>
+                              <li>Frequently asked questions</li>
+                              <li>Key points and insights</li>
+                              <li>Any specific questions about the content</li>
+                            </ul>
+                          </div>
                         </div>
                       </div>
                     )}
+                    {/* Invisible element to scroll to */}
+                    <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
 
@@ -376,53 +448,80 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* Right Column - AI Tools */}
+          {/* Right Column - Chat Suggestions */}
           <div className="col-span-3">
             <Card className="bg-notemon-surface/50 border-notemon-surface h-full">
               <CardHeader>
-                <CardTitle className="text-notemon-text-main">AI Tools</CardTitle>
+                <CardTitle className="text-notemon-text-main">Chat Suggestions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {selectedDocument ? (
+                  <>
+                    <div className="space-y-3">
                 <Button
-                  onClick={handleSummarize}
+                        onClick={() => setChatMessage("Summarize this document")}
                   disabled={isLoading}
-                  className="w-full justify-start bg-notemon-background/50 hover:bg-notemon-primary/20 text-notemon-text-main border border-notemon-surface"
+                        className="w-full justify-start bg-notemon-background/50 hover:bg-notemon-primary/20 text-notemon-text-main border border-notemon-surface text-sm py-2"
                   variant="outline"
                 >
-                  <FileText className="h-5 w-5 mr-3" />
-                  Generate Summary
+                        <FileText className="h-4 w-4 mr-2" />
+                        Summarize Document
                 </Button>
 
                 <Button
-                  onClick={handleGenerateMindmap}
+                        onClick={() => setChatMessage("Generate frequently asked questions from this document")}
                   disabled={isLoading}
-                  className="w-full justify-start bg-notemon-background/50 hover:bg-notemon-primary/20 text-notemon-text-main border border-notemon-surface"
+                        className="w-full justify-start bg-notemon-background/50 hover:bg-notemon-primary/20 text-notemon-text-main border border-notemon-surface text-sm py-2"
                   variant="outline"
                 >
-                  <Brain className="h-5 w-5 mr-3" />
-                  Create Mindmap
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Generate FAQs
                 </Button>
 
                 <Button
-                  onClick={handleGenerateFAQs}
+                        onClick={() => setChatMessage("Extract the main key points from this document")}
                   disabled={isLoading}
-                  className="w-full justify-start bg-notemon-background/50 hover:bg-notemon-primary/20 text-notemon-text-main border border-notemon-surface"
+                        className="w-full justify-start bg-notemon-background/50 hover:bg-notemon-primary/20 text-notemon-text-main border border-notemon-surface text-sm py-2"
                   variant="outline"
                 >
-                  <List className="h-5 w-5 mr-3" />
-                  Generate FAQs
+                        <Target className="h-4 w-4 mr-2" />
+                        Key Points
                 </Button>
+
+                      <Button
+                        onClick={() => setChatMessage("What are the action items or recommendations in this document?")}
+                        disabled={isLoading}
+                        className="w-full justify-start bg-notemon-background/50 hover:bg-notemon-primary/20 text-notemon-text-main border border-notemon-surface text-sm py-2"
+                        variant="outline"
+                      >
+                        <CheckSquare className="h-4 w-4 mr-2" />
+                        Action Items
+                      </Button>
+                    </div>
 
                 <Separator className="bg-notemon-surface" />
 
                 <div className="text-center">
                   <p className="text-sm text-notemon-text-secondary mb-2">
-                    Document loaded:
+                        Current Document:
                   </p>
-                  <p className="text-xs text-notemon-text-main">
-                    {documentContent ? `${documentContent.substring(0, 50)}...` : 'No document selected'}
-                  </p>
-                </div>
+                      <p className="text-sm text-notemon-text-main font-medium mb-1">
+                        {documents.find(doc => doc.id === selectedDocument)?.name}
+                      </p>
+                      <p className="text-xs text-notemon-text-secondary">
+                        {documentContent ? `${documentContent.substring(0, 50)}...` : 'No content available'}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <Sparkles className="h-12 w-12 text-notemon-text-secondary mx-auto mb-4" />
+                    <p className="text-notemon-text-secondary mb-2">Select a Document</p>
+                    <p className="text-sm text-notemon-text-secondary">
+                      Choose a document from the left panel to start chatting
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

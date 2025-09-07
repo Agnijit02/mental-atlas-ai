@@ -11,7 +11,6 @@ import {
   Sparkles, 
   Zap,
   ArrowRight,
-  BookOpen,
   HelpCircle,
   UploadCloud,
   Wand2,
@@ -282,9 +281,6 @@ const LandingPage = () => {
       <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-notemon-surface">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="p-2 bg-gradient-primary rounded-lg">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
             <span className="text-xl font-bold text-notemon-text-main">NoteMon</span>
           </div>
           <p className="text-notemon-text-secondary mb-4">

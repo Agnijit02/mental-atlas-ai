@@ -76,19 +76,37 @@ export function useDocuments() {
     return data;
   };
 
-  const processDocument = async (documentId: string, action: 'summary' | 'faq' | 'chat', prompt?: string) => {
+  const processDocument = async (documentId: string, action: 'summary' | 'faq' | 'chat', prompt?: string, language?: string) => {
     if (!session) throw new Error('Not authenticated');
 
-    const { data, error } = await supabase.functions.invoke('process-document', {
-      body: {
-        action,
-        documentId,
-        prompt
-      }
-    });
+    console.log('🚀 Client: Calling process-document function');
+    console.log('📊 Client: Request params:', { documentId, action, prompt: prompt ? 'present' : 'none', language });
 
-    if (error) throw error;
-    return data;
+    try {
+      const { data, error } = await supabase.functions.invoke('process-document', {
+        body: {
+          action,
+          documentId,
+          prompt,
+          language
+        }
+      });
+
+      console.log('📥 Client: Response received');
+      console.log('📄 Client: Response data:', data);
+      console.log('❌ Client: Response error:', error);
+
+      if (error) {
+        console.error('❌ Client: Function invocation failed:', error);
+        throw error;
+      }
+
+      console.log('✅ Client: Function call successful');
+      return data;
+    } catch (error) {
+      console.error('💥 Client: Exception in processDocument:', error);
+      throw error;
+    }
   };
 
   return {

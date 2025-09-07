@@ -32,6 +32,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [hasShownWelcome, setHasShownWelcome] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -41,11 +42,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        if (event === 'SIGNED_IN' && session?.user) {
+        // Only show welcome message on actual sign in, not on tab switches
+        if (event === 'SIGNED_IN' && session?.user && !hasShownWelcome) {
+          setHasShownWelcome(true);
           toast({
             title: 'Welcome!',
             description: 'You have successfully signed in.',
           });
+        }
+
+        // Reset welcome flag on sign out
+        if (event === 'SIGNED_OUT') {
+          setHasShownWelcome(false);
         }
       }
     );
@@ -58,7 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, [toast]);
+  }, [toast, hasShownWelcome]);
 
   const signIn = async (email: string, password: string) => {
     try {
