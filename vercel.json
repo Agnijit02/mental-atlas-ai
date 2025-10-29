@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "https://www.mental-atlas-ai.vercel.app/(.*)",
+      "destination": "https://mental-atlas-ai.vercel.app/$1",
+      "permanent": true
+    }
+  ]
+}
